@@ -52,7 +52,9 @@
     "redux-thunk": "^2.3.0",
     "sha1": "^1.1.1",
     "socket.io-client": "^2.2.0",
-    "uuid": "7"
+    "uuid": "7",
+    "win-ca": "^3.5.1",
+    "windows-certs": "^3.4.0"
   },
   "devDependencies": {
     "@babel/runtime": "^7.17.2",

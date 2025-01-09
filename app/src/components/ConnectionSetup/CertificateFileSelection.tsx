@@ -2,12 +2,13 @@ import * as React from 'react'
 import ClearAdornment from '../helper/ClearAdornment'
 import Lock from '@material-ui/icons/Lock'
 import { bindActionCreators } from 'redux'
-import { Button, Theme, Tooltip, Typography } from '@material-ui/core'
+import { Button, Dialog, Theme, Tooltip, Typography } from '@material-ui/core'
 import { CertificateParameters, ConnectionOptions } from '../../model/ConnectionOptions'
-import { CertificateTypes } from '../../actions/ConnectionManager'
+import { CertificateTypes, getAllCertificates } from '../../actions/ConnectionManager'
 import { connect } from 'react-redux'
 import { connectionManagerActions } from '../../actions'
 import { withStyles } from '@material-ui/styles'
+import CertDialog from '../CertDialog'
 
 function CertificateFileSelection(props: {
   certificateType: CertificateTypes
@@ -19,28 +20,57 @@ function CertificateFileSelection(props: {
   }
   connection: ConnectionOptions
 }) {
+  const [open, setOpen] = React.useState(false);
+  const emails = ['test', '534werw']
+  const [selectedValue, setSelectedValue] = React.useState(emails[1]);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
   const clearCertificate = React.useCallback(() => {
     props.actions.connectionManager.updateConnection(props.connection.id, {
       [props.certificateType]: undefined,
     })
   }, [props.connection, props.certificateType])
-
+ 
+ 
   return (
     <span>
       <Tooltip title="Select certificate" placement="top">
         <Button
           variant="contained"
           className={props.classes.button}
-          onClick={() => props.actions.connectionManager.selectCertificate(props.certificateType, props.connection.id)}
+          onClick={() => handleClickOpen()}
         >
           <Lock /> {props.title}
         </Button>
+
+        
+
+
+        
+
       </Tooltip>
+      
+            <div>
+              <CertDialog
+          certificateType={props.certificateType}
+          open={open}
+          onClose={handleClose}
+          onStoreCertificateSelected={(value) => {
+            props.actions.connectionManager.selectCertificateFromStore(props.certificateType, props.connection.id, value)
+          } } onFileCertifiicateSelected={() =>
+              props.actions.connectionManager.selectCertificate(props.certificateType, props.connection.id)
+            }              />
+            </div>
       <ClearCertificate classes={props.classes} certificate={props.certificate} action={clearCertificate} />
     </span>
   )
 }
-
 function ClearCertificate(props: { classes: any; certificate?: CertificateParameters; action: () => void }) {
   if (!props.certificate) {
     return null
@@ -55,6 +85,7 @@ function ClearCertificate(props: { classes: any; certificate?: CertificateParame
     </Tooltip>
   )
 }
+
 
 const mapDispatchToProps = (dispatch: any) => {
   return {

@@ -119,6 +119,7 @@
     "about-window": "^1.12.1",
     "axios": "^0.28.0",
     "dot-prop": "^5.0.0",
+    "electron-edge-js": "^33.0.5",
     "electron-log": "4.4.6",
     "electron-updater": "^4.6",
     "fs-extra": "9",

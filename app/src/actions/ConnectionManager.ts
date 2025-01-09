@@ -63,7 +63,17 @@ export const selectCertificate =
       dispatch(showError(error))
     }
   }
-
+export const selectCertificateFromStore = (type: CertificateTypes, connectionId: string, certificate : CertificateParameters)=> async (dispatch: Dispatch<any>, getState: () => AppState) => {
+  try {
+    dispatch(
+      updateConnection(connectionId, {
+        [type]: certificate,
+      })
+    )
+  } catch (error) {
+    dispatch(showError(error))
+  }
+}
 async function openCertificate(): Promise<CertificateParameters> {
   const rejectReasons = {
     noCertificateSelected: 'No certificate selected',
@@ -89,6 +99,20 @@ async function openCertificate(): Promise<CertificateParameters> {
     data: data.toString('base64'),
     name: path.basename(selectedFile),
   }
+}
+
+export async function getAllCertificates(options : any) : Promise<Array<CertificateParameters>>{
+  let certs = new Array<CertificateParameters>()
+  var edge = require('edge');
+
+  var getCerts = edge.func(path.join(__dirname, 'get_certs.csx'));
+  var params = {
+    storeName: options.storeName || '',
+    storeLocation: options.storeLocation || '',
+    hasStoreName: !!options.storeName,
+    hasStoreLocation: !!options.storeLocation
+  };
+  return getCerts(params);
 }
 
 export const saveConnectionSettings = () => async (dispatch: Dispatch<any>, getState: () => AppState) => {

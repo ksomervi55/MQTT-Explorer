@@ -38,6 +38,13 @@ module.exports = {
       },
     },
   },
+  externals: {
+    'edge-js': 'commonjs2 edge-js',
+  },
+  node: {
+    __dirname: true,
+    __filename: true,
+  },
   devServer: {
     // contentBase: './dist', // content not from webpack
     hot: true,
@@ -66,7 +73,7 @@ module.exports = {
         exclude: /node_modules/,
       },
       // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-      { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
+      { enforce: 'pre', test: /\.m?js$/, loader: 'source-map-loader' },
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
@@ -74,6 +81,24 @@ module.exports = {
       {
         test: /\.(png|jpg|gif)$/i,
         type: 'asset/resource',
+      },
+      {
+        test: /\.node$/,
+        use: 'node-loader'
+      },
+      {
+        test: /\.(png|svg|jpe?g|gif)$/,
+        include: /images/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'images/',
+              publicPath: 'images/'
+            }
+          }
+        ]
       },
       // {
       //   test: /\.node$/,
@@ -101,9 +126,12 @@ module.exports = {
   // This is important because it allows us to avoid bundling all of our
   // dependencies, which allows browsers to cache those libraries between builds.
   externals: {
-    // "react": "React",
-    // "react-dom": "ReactDOM"
-  },
+    'electron-edge-js': 'commonjs2 electron-edge-js',
+},
+node: {
+    __dirname: true,
+    __filename: true,
+},
   cache: {
     type: 'filesystem',
   },
