@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 public static class MyExtensions
@@ -26,23 +27,31 @@ public static class MyExtensions
     public static string ExportPEMEncoded(this X509Certificate2 cert)
     {
         var buffer = cert.GetRawCertData();
-        var toReturn = "45,45,45,45,45,66,69,71,73,78,32,67,69,82,84,73,70,73,67,65,84,69,45,45,45,45,45,13,10,";
-        foreach (byte b in buffer)
-        {
-            toReturn = toReturn + b + ",";
-        }
-        return toReturn + "13,10,45,45,45,45,45,69,78,68,32,67,69,82,84,73,70,73,67,65,84,69,45,45,45,45,45,13,10";
+        var toReturn = "-----BEGIN CERTIFICATE-----";
+        toReturn += Convert.ToBase64String(buffer);
+        return toReturn + "-----END CERTIFICATE-----";
     }
 
     public static string ExportKey(this X509Certificate2 cert)
     {
-        var buffer = cert.PublicKey.EncodedKeyValue.RawData;
-        var toReturn = string.Empty;
-        foreach (byte b in buffer)
+        try
         {
-            toReturn = toReturn + b + ",";
+            var temp = RSACertificateExtensions.GetRSAPrivateKey(cert) as RSACng;
+            var toReturn = "-----BEGIN PRIVATE KEY-----";
+
+            if (temp == null)
+            {
+                return toReturn;
+            }
+            toReturn += Convert.ToBase64String(temp.Key.Export(CngKeyBlobFormat.GenericPrivateBlob));
+            toReturn += "-----END PRIVATE KEY-----";
+            return toReturn;
         }
-        return toReturn;
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+        return string.Empty;
     }
 
 }
@@ -54,40 +63,42 @@ public class Startup
     {
         dynamic options = (dynamic)input;
         X509Store store;
-
-        if (options.hasStoreName && options.hasStoreLocation)
+        try
         {
-            var storeName = Enum.Parse(typeof(StoreName), options.storeName);
-            var storeLocation = Enum.Parse(typeof(StoreLocation), options.storeLocation);
-            store = new X509Store(storeName, storeLocation);
+            if (options.hasStoreName && options.hasStoreLocation)
+            {
+                var storeName = Enum.Parse(typeof(StoreName), options.storeName);
+                var storeLocation = Enum.Parse(typeof(StoreLocation), options.storeLocation);
+                store = new X509Store(storeName, storeLocation);
+            }
+            else if (options.hasStoreName)
+            {
+                var storeName = Enum.Parse(typeof(StoreName), options.storeName);
+                store = new X509Store(storeName);
+            }
+            else if (options.hasStoreLocation)
+            {
+                var storeLocation = Enum.Parse(typeof(StoreLocation), options.storeLocation);
+                store = new X509Store(storeLocation);
+            }
+            else
+            {
+                store = new X509Store();
+            }
+            store.Open(OpenFlags.ReadWrite);
+            var result = store.Certificates.Cast<X509Certificate2>().Select(cert => "{ \"pem\" : \"" + cert.ExportPEMEncoded() + "\" , \"subject\" : \"" + cert.SubjectName.Name.Replace("\"", string.Empty) + "\", \"thumbprint\" : \" " + cert.Thumbprint.ToString().Replace("\"", string.Empty) + "\", \"issuer\" : \"" + cert.IssuerName.Name.Replace("\"", string.Empty) + "\", \"key\" : \"" + cert.ExportKey() + "\"}"
+            );
+
+            store.Close();
+
+            return result.ToArray();
         }
-        else if (options.hasStoreName)
+        catch (Exception ex)
         {
-            var storeName = Enum.Parse(typeof(StoreName), options.storeName);
-            store = new X509Store(storeName);
-        }
-        else if (options.hasStoreLocation)
-        {
-            var storeLocation = Enum.Parse(typeof(StoreLocation), options.storeLocation);
-            store = new X509Store(storeLocation);
-        }
-        else
-        {
-            store = new X509Store();
+            Console.WriteLine(ex.ToString());
         }
 
-        store.Open(OpenFlags.ReadWrite);
-        var result = store.Certificates.Cast<X509Certificate2>().Select(cert => "{ \"pem\" : \"" + cert.ExportPEMEncoded() + "\" , \"subject\" : \"" + cert.SubjectName.Name.Replace("\"", string.Empty) + "\", \"thumbprint\" : \" " + cert.Thumbprint.ToString().Replace("\"", string.Empty) + "\", \"issuer\" : \"" + cert.IssuerName.Name.Replace("\"", string.Empty) + "\", \"key\" : \"" + cert.PublicKey.EncodedKeyValue.RawData + "\"}"
-        );
-
-        store.Close();
-        foreach (var res in result)
-        {
-            Console.WriteLine(res);
-        }
-        return result.ToArray();
-
-
+        return Array.Empty<string>();
 
     }
 

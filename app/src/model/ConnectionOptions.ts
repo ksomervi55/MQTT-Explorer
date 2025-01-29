@@ -33,7 +33,6 @@ export function toMqttConnection(options: ConnectionOptions): MqttOptions | unde
   if (options.type !== 'mqtt') {
     return
   }
-
   return {
     url: `${options.protocol}://${options.host}:${options.port}/${options.basePath || ''}`,
     username: options.username,

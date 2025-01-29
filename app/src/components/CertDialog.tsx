@@ -93,6 +93,7 @@ export default function CertDialog(props: SimpleDialogProps) {
       
       const certificates = Array<CertificateParameters>()
       getCertificates({storeName : selectedStore, storeLocation :'CurrentUser'}, (err: any, certs : Array<string>) =>{
+        try{
         certs.forEach((c) => {
           const certificate = JSON.parse(c)
           if(certificateType == "clientKey"){
@@ -101,7 +102,10 @@ export default function CertDialog(props: SimpleDialogProps) {
           else{
             certificates.push({name : certificate.subject, data: certificate.pem})
           }
-        })
+        })}
+        catch(ex){
+          console.error(ex);
+        }
      })
     return(<List>
       {certificates.map((certificate : CertificateParameters) => (
