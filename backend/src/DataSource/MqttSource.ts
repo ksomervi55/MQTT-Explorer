@@ -46,7 +46,6 @@ export class MqttSource implements DataSource<MqttOptions> {
       this.stateMachine.setError(error as Error)
       throw error
     }
-
     const client = mqttConnect(url.toString(), {
       resubscribe: false,
       rejectUnauthorized: options.certValidation,

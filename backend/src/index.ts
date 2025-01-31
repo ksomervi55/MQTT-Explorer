@@ -25,7 +25,6 @@ export class ConnectionManager {
     const options = event.options
     const connection = new MqttSource()
     this.connections[connectionId] = connection
-
     const connectionStateEvent = makeConnectionStateEvent(connectionId)
     connection.stateMachine.onUpdate.subscribe(state => {
       backendEvents.emit(connectionStateEvent, state)

@@ -9,11 +9,12 @@ import {
 import { default as persistentStorage, StorageIdentifier } from '../utils/PersistentStorage'
 import { Dispatch } from 'redux'
 import { showError } from './Global'
+import { promises as fsPromise } from 'fs'
 import * as path from 'path'
 import { ActionTypes, Action } from '../reducers/ConnectionManager'
 import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 import { connectionsMigrator } from './migrations/Connection'
-import { rendererRpc, readFromFile } from '../../../events'
+import { rendererRpc } from '../../../events'
 import { makeOpenDialogRpc } from '../../../events/OpenDialogRequest'
 
 export interface ConnectionDictionary {
@@ -63,7 +64,17 @@ export const selectCertificate =
       dispatch(showError(error))
     }
   }
-
+export const selectCertificateFromStore = (type: CertificateTypes, connectionId: string, certificate : CertificateParameters)=> async (dispatch: Dispatch<any>, getState: () => AppState) => {
+  try {
+    dispatch(
+      updateConnection(connectionId, {
+        [type]: certificate,
+      })
+    )
+  } catch (error) {
+    dispatch(showError(error))
+  }
+}
 async function openCertificate(): Promise<CertificateParameters> {
   const rejectReasons = {
     noCertificateSelected: 'No certificate selected',
@@ -80,15 +91,28 @@ async function openCertificate(): Promise<CertificateParameters> {
     throw rejectReasons.noCertificateSelected
   }
 
-  const data = await rendererRpc.call(readFromFile, { filePath: selectedFile })
+  const data = await fsPromise.readFile(selectedFile)
   if (data.length > 16_384 || data.length < 64) {
     throw rejectReasons.certificateSizeDoesNotMatch
   }
-
   return {
     data: data.toString('base64'),
     name: path.basename(selectedFile),
   }
+}
+
+export async function getAllCertificates(options : any) : Promise<Array<CertificateParameters>>{
+  let certs = new Array<CertificateParameters>()
+  var edge = require('edge');
+
+  var getCerts = edge.func(path.join(__dirname, 'get_certs.csx'));
+  var params = {
+    storeName: options.storeName || '',
+    storeLocation: options.storeLocation || '',
+    hasStoreName: !!options.storeName,
+    hasStoreLocation: !!options.storeLocation
+  };
+  return getCerts(params);
 }
 
 export const saveConnectionSettings = () => async (dispatch: Dispatch<any>, getState: () => AppState) => {
