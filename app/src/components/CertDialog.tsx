@@ -1,9 +1,11 @@
-import { Avatar, Button, Dialog, DialogTitle, InputLabel, List, ListItem, ListItemAvatar, ListItemText, MenuItem, Select, Typography } from "@material-ui/core";
+import { Avatar, Button, Dialog, DialogTitle, IconButton, InputLabel, List, ListItem, ListItemAvatar, ListItemText, MenuItem, Select, Tooltip, Typography } from "@material-ui/core";
 
 import React from "react";
 import path from 'path'
 import { CertificateParameters } from "../model/ConnectionOptions";
 import { CertificateTypes } from "../actions/ConnectionManager";
+import { title } from "process";
+import { Info, QuestionAnswer } from "@material-ui/icons";
 
 const emails = ['username@gmail.com', 'user02@gmail.com'];
 
@@ -136,7 +138,11 @@ export default function CertDialog(props: SimpleDialogProps) {
 
   return (
     <Dialog onClose={handleClose} open={open}>
-      <DialogTitle>Set Certificates</DialogTitle>
+      <DialogTitle>Set Certificates {certificateType === 'clientKey' && <Tooltip title="If you do not see your certificate or key make sure it is properly installed and the key is exportable">
+  <IconButton>
+    <Info />
+  </IconButton>
+</Tooltip> }</DialogTitle>
       <Button onClick={handleFileSelectionClick}>File Selection</Button>
       <InputLabel>Store Selection:</InputLabel>
       <Select value={selectedStore} onChange={handleChange} >
