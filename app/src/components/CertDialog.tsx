@@ -124,11 +124,6 @@ export default function CertDialog(props: SimpleDialogProps) {
       {certificates.map((certificate : CertificateParameters) => (
           <ListItem  key={certificate.name}>
               <Button onClick={() => handleListItemClick(certificate)}>
-                  <ListItemAvatar>
-                      <Avatar >
-                          {certificate.name}
-                      </Avatar>
-                  </ListItemAvatar>
                   <ListItemText primary={certificate.name} />
               </Button>
           </ListItem>
