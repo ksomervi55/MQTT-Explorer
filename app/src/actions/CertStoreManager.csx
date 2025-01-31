@@ -23,29 +23,47 @@ public static class MyExtensions
 
         return String.Join("\n", chunks);
     }
-
     public static string ExportPEMEncoded(this X509Certificate2 cert)
     {
-        var buffer = cert.GetRawCertData();
-        var toReturn = "-----BEGIN CERTIFICATE-----";
-        toReturn += Convert.ToBase64String(buffer);
-        return toReturn + "-----END CERTIFICATE-----";
+        StringBuilder builder = new StringBuilder();
+        builder.AppendLine("-----BEGIN CERTIFICATE-----");
+        builder.AppendLine(
+            Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
+        builder.AppendLine("-----END CERTIFICATE-----");
+        var toReturn = string.Empty;
+        var buffer = Encoding.ASCII.GetBytes(builder.ToString());
+        foreach (var b in buffer)
+        {
+            toReturn = toReturn + b + ',';
+        }
+        return toReturn;
     }
+
 
     public static string ExportKey(this X509Certificate2 cert)
     {
         try
         {
-            var temp = RSACertificateExtensions.GetRSAPrivateKey(cert) as RSACng;
-            var toReturn = "-----BEGIN PRIVATE KEY-----";
 
-            if (temp == null)
+
+            var toReturn = string.Empty;
+            if (cert.HasPrivateKey)
             {
+                var temp = cert.GetRSAPrivateKey() as RSACng;
+                var test = temp.Key.Export(CngKeyBlobFormat.Pkcs8PrivateBlob);
+                StringBuilder builder = new StringBuilder();
+                builder.AppendLine("-----BEGIN PRIVATE KEY-----");
+                builder.AppendLine(
+                    Convert.ToBase64String(test, Base64FormattingOptions.InsertLineBreaks));
+                builder.AppendLine("-----END PRIVATE KEY-----");
+                var buffer = Encoding.ASCII.GetBytes(builder.ToString());
+                foreach (var b in buffer)
+                {
+                    toReturn = toReturn + b + ',';
+                }
                 return toReturn;
             }
-            toReturn += Convert.ToBase64String(temp.Key.Export(CngKeyBlobFormat.GenericPrivateBlob));
-            toReturn += "-----END PRIVATE KEY-----";
-            return toReturn;
+            return string.Empty;
         }
         catch (Exception ex)
         {
@@ -53,6 +71,7 @@ public static class MyExtensions
         }
         return string.Empty;
     }
+
 
 }
 
@@ -65,6 +84,7 @@ public class Startup
         X509Store store;
         try
         {
+            Console.WriteLine(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
             if (options.hasStoreName && options.hasStoreLocation)
             {
                 var storeName = Enum.Parse(typeof(StoreName), options.storeName);

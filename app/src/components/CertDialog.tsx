@@ -16,16 +16,20 @@ export interface SimpleDialogProps {
 }
 export const stores = ['My', 'AddressBook', 'CertificateAuthority', 'Disallowed','Root', 'TrustedPeople', 'TrustedPublisher'  ]
 
-// var helloWorld = edge.func(function () {/*
-//     async (input) => { 
-//         return ".NET Welcomes " + input.ToString(); 
-//     }
-// */});
+function stringToBytes(val : string) {
+  if(val.length == 0)
+    return Buffer.alloc(0)
+  var bytes = val.split(',')
+  var buf = Buffer.alloc(bytes.length)
+  var currentPosition = 0;
+  bytes.forEach((b) => {
+    var uint = parseInt(b)
+    buf.writeUint8(uint,currentPosition)
+    currentPosition++
+  })
+  return buf
+}
 
-// helloWorld('JavaScript', function (error : any, result : any) {
-//     if (error) throw error;
-//     console.log(result);
-// });
 export default function CertDialog(props: SimpleDialogProps) {
   var edge = require('electron-edge-js');
 
@@ -96,11 +100,18 @@ export default function CertDialog(props: SimpleDialogProps) {
         try{
         certs.forEach((c) => {
           const certificate = JSON.parse(c)
+          
           if(certificateType == "clientKey"){
-            certificates.push({name : certificate.subject, data: certificate.key})
+            var data = stringToBytes(certificate.key)
+            if(!data.length)
+              return;
+            certificates.push({name : certificate.subject, data: data.toString('base64')})
           }
           else{
-            certificates.push({name : certificate.subject, data: certificate.pem})
+            var data = stringToBytes(certificate.pem)
+            if(!data.length)
+              return;
+            certificates.push({name : certificate.subject, data: data.toString('base64')})
           }
         })}
         catch(ex){
